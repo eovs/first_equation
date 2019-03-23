@@ -137,5 +137,6 @@ int main( void )
 		 << ", bad HC eqs " << girth_attribute.badHC
 		 << endl;*/
 
+	system("pause");
 	return 0;
 }

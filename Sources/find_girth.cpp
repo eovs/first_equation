@@ -91,7 +91,7 @@ GIRTH_ATTRIBUTE find_girth( matrix<int> &HB, matrix<int> &HC, int M, int q_mod, 
 
 		if( check.first_failed_equation == -1 )
 		{
-			cout << "----- girth " << girth << ": OK\n\n";
+			cout << "----- girth " << girth << ": OK  -- eqs: " << check.equations << ", badHB " << check.badHB << ", badHC " << check.badHC << "\n\n";
 			gattr.girth = girth;
 			girth += 2;
 		}

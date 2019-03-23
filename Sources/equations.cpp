@@ -258,8 +258,8 @@ voltage_check_result equation_builder::check_voltages_and_coefs
 	 rv.badHC = 0;
 	 
 	 int num_failed = 0;
-	 int HB_failed = 0;
-	 int HC_failed = 0;
+	 rv.badHB = 0;
+	 rv.badHC = 0;
 	 for (int i = 0, i_max = (int) equations.size(); i < i_max; ++i) 
 	 {
 		 int sum = values[equations[i].first] - values[equations[i].second];
@@ -268,11 +268,11 @@ voltage_check_result equation_builder::check_voltages_and_coefs
 			 // An identity zero found.
 			 int coef_sum = coef_values[equations[i].first] - coef_values[equations[i].second];
 			 
-			 HB_failed++;
+			 rv.badHB++;
 
 			 if( coef_sum == 0 )
 			 {
-				HC_failed++;
+				rv.badHC++;
 				rv.first_failed_equation = num_failed;
 				//break;
 			 }
@@ -281,8 +281,6 @@ voltage_check_result equation_builder::check_voltages_and_coefs
 
 	 if( rv.first_failed_equation != -1 )
 	 {
-		 rv.badHB = HB_failed;
-		 rv.badHC = HC_failed;
 		 return rv;
 	 }
 
@@ -291,6 +289,10 @@ voltage_check_result equation_builder::check_voltages_and_coefs
 	 for (int i = 0, i_max = (int) equations.size(); i < i_max; ++i) 
 	 {
 		 int sum = std::abs(values[equations[i].first] - values[equations[i].second]);
+		 int coef_sum = coef_values[equations[i].first] - coef_values[equations[i].second];
+		 if( sum == 0 && coef_sum != 0 )
+			 continue;
+
 		 vector< int > const &divs = divisors(sum);
 		 for (int j = 0, j_max = (int) divs.size(); j < j_max && divs[j] <= max_modulo; ++j) 
 		 {
