@@ -4,9 +4,14 @@
 
 #include "data_structures.h"
 #include "equations.h"
-#include "find_girth.h"
+#include "check_girth.h"
 
-#define START_GIRTH 4
+
+#define MATRIX_HB "HB.TXT"
+#define MATRIX_HC "HC.TXT"
+
+#define MIN_GIRTH 4
+#define MAX_GIRTH 16
 #define Q_MOD 16
 #define TAILBITE_LENGTH 32
 
@@ -40,7 +45,6 @@ int main( void )
 	int rows, columns;
 	int M;
 	int starting_length;
-	GIRTH_ATTRIBUTE girth_attribute;
 	FILE *fp;
 
 	M               = TAILBITE_LENGTH;
@@ -48,7 +52,7 @@ int main( void )
 
 
 #if 1
-	fp = fopen("HB.txt", "rt");
+	fp = fopen(MATRIX_HB, "rt");
 	if( fp == NULL )
 		return 1;
 
@@ -69,7 +73,7 @@ int main( void )
 	}
 	fclose( fp );
 
-	fp = fopen("HC.txt", "rt");
+	fp = fopen(MATRIX_HC, "rt");
 	if( fp == NULL )
 		return 1;
 
@@ -105,38 +109,21 @@ int main( void )
 		for( int j = 0; j < columns; j++ )
 			current_HC(i, j) = HC[i][j];
 #endif
-	for( int i = 0; i < current_HC.n_rows(); i++ )
+
+
+	for( int girth = MIN_GIRTH; girth < MAX_GIRTH; girth += 2 )
 	{
-		for( int j = 0; j < current_HC.n_cols(); j++ )
-		{
-			if( current_HB(i, j) > -1  )
-				current_HC(i, j) = current_HC(i, j) % M;
-		}
+		GIRTH_ATTRIBUTE girth_attribute = check_girth( current_HB, current_HC, M, q_mod, girth );
+		
+		int flag = q_mod > 2 ? flag = girth_attribute.badHC : girth_attribute.badHB;
+
+		if( flag == 0 )
+			cout << "----- girth " << girth << ": OK"; 
+		else
+			cout << "----- girth " << girth << ": BAD";
+
+		cout << " -- eqs: " << girth_attribute.equations << ", badHB " << girth_attribute.badHB << ", badHC " << girth_attribute.badHC << "\n\n";
 	}
-
-
-	if( q_mod > 2 )
-	{
-		for( int i = 0; i < current_HC.n_rows(); i++ )
-		{
-			for( int j = 0; j < current_HC.n_cols(); j++ )
-			{
-				if( current_HB(i, j) > -1 && current_HC(i, j) > -1 )
-					current_HC(i, j) = current_HC(i, j) % (q_mod-1);
-				else
-					current_HC(i, j) = -1;
-			}
-		}
-	}
-
-	girth_attribute = find_girth( current_HB, current_HC, M, q_mod, START_GIRTH );
-
-/*	cout << "girth is " << girth_attribute.girth << endl << endl;
-	cout << "girth << : " << "equations " << girth_attribute.equations
-		 << ", bad HB eqs " << girth_attribute.badHB
-		 << ", bad HC eqs " << girth_attribute.badHC
-		 << endl;*/
-
 	system("pause");
 	return 0;
 }

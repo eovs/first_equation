@@ -18,7 +18,7 @@
     <ClCompile Include="..\Sources\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Sources\equations.cpp">
+    <ClCompile Include="..\Sources\check_girth.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\Sources\combinatorics.cpp">
@@ -30,12 +30,12 @@
     <ClCompile Include="..\Sources\data_structures.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Sources\find_girth.cpp">
+    <ClCompile Include="..\Sources\equations.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Sources\find_girth.h">
+    <ClInclude Include="..\Sources\check_girth.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
