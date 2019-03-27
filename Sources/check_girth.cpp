@@ -285,6 +285,17 @@ void unpackMatrix_double2short(double m[], int height, int width, short *result[
 	}
 }
 
+void unpackMatrix(double m[], int height, int width, matrix<int> &result )
+{
+	int i,j;
+	for( i = 0; i < height; ++i)
+	{
+		for( j = 0; j < width; ++j)
+		{
+			result(i, j) = (short)m[j * height + i];
+		}
+	}
+}
 #endif  //SKIP_MEX
 
 #ifndef SKIP_MEX
@@ -331,17 +342,27 @@ void mexFunction(int nOut, mxArray *pOut[], int nInp, const mxArray *pInp[])
 {
 	static int nh, mh, M, q_mod;
 	static int girth; 
+	static matrix<int> HB;
+	static matrix<int> HC;
 
 	mh = (int)mxGetM(pInp[0]);
 	nh = (int)mxGetN(pInp[0]);
+
+	HB = matrix<int>(mh, nh);
+	HC = matrix<int>(mh, nh);
 
 	M     = (int)mxGetPr(pInp[2])[0];
 	q_mod = (int)mxGetPr(pInp[3])[0];
 	girth = (int)mxGetPr(pInp[4])[0];
 
-	pOut[0] =  mxCreateDoubleScalar((double)M);
-	pOut[1] =  mxCreateDoubleScalar((double)q_mod);
-	pOut[2] =  mxCreateDoubleScalar((double)girth);
+	unpackMatrix(mxGetPr(pInp[0]), mh, nh, HB );
+	unpackMatrix(mxGetPr(pInp[1]), mh, nh, HC );
+
+    GIRTH_ATTRIBUTE girth_attribute = check_girth( HB, HC, M, q_mod, girth );
+	
+    pOut[0] =  mxCreateDoubleScalar((double)girth_attribute.equations);
+	pOut[1] =  mxCreateDoubleScalar((double)girth_attribute.badHB);
+	pOut[2] =  mxCreateDoubleScalar((double)girth_attribute.badHC);
 
 #if 0
 	switch( nInp )
