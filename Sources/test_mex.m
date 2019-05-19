@@ -64,9 +64,8 @@ HC=[ 1  0 0  0 0  0 0 0  0 0 0 0 0  0 0 0 0 0  0 0  0 0 0 14 10 11 0  0  0 0  0 
 %  0  0 7   1  5 2 0  8
 % ];
 
-M=129;
+M=128;
 Q=16;
-girth = 8;
 
 for girth=4:2:14
     [Neqs, HBbad, HCbad] = check_girth(HB, HC, M, Q, girth);

@@ -183,7 +183,8 @@ voltage_check_result equation_builder::check_voltages
 
     for (int i = 0, i_max = (int) equations.size(); i < i_max; ++i) {
         int sum = values[equations[i].first] - values[equations[i].second];
-        if (sum == 0) {
+
+        if (sum % max_modulo == 0) {
             // An identity zero found.
             rv.first_failed_equation = num_failed;
 			HB_failed++;
@@ -221,7 +222,8 @@ voltage_check_result equation_builder::check_voltages_and_coefs
 (
  vector< int > const &voltages,
  int max_modulo,
- vector< int > const &coef
+ vector< int > const &coef,
+ int q_mod
  ) const 
 {
 	 voltage_check_result rv;
@@ -263,14 +265,14 @@ voltage_check_result equation_builder::check_voltages_and_coefs
 	 for (int i = 0, i_max = (int) equations.size(); i < i_max; ++i) 
 	 {
 		 int sum = values[equations[i].first] - values[equations[i].second];
-		 if (sum == 0) 
+		 if (sum % max_modulo == 0) 
 		 {
 			 // An identity zero found.
 			 int coef_sum = coef_values[equations[i].first] - coef_values[equations[i].second];
 			 
 			 rv.badHB++;
 
-			 if( coef_sum == 0 )
+			 if( coef_sum % q_mod == 0 )
 			 {
 				rv.badHC++;
 				rv.first_failed_equation = num_failed;

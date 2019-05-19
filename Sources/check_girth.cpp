@@ -74,7 +74,7 @@ static int prim_polinomial[10][100] =
 };	
 
 #if 01
-GIRTH_ATTRIBUTE check_girth( matrix<int> &HB, matrix<int> &HC, int M, int q_mod, int girth )
+GIRTH_ATTRIBUTE check_girth( matrix<int> &HB_org, matrix<int> &HC_org, int M, int q_mod, int girth )
 {
 	GIRTH_ATTRIBUTE gattr;
 	short *gf2log;
@@ -82,11 +82,21 @@ GIRTH_ATTRIBUTE check_girth( matrix<int> &HB, matrix<int> &HC, int M, int q_mod,
 	int p;
 	int q_bits;
 
-	int starting_length = HB.n_cols();
-	int nrows = HB.n_rows();
-	int ncols = HB.n_cols();
+	int starting_length = HB_org.n_cols();
+	int nrows = HB_org.n_rows();
+	int ncols = HB_org.n_cols();
 
 	matrix< int >HM(nrows, ncols);
+
+	matrix< int >HB(nrows, ncols);
+	for( int i = 0; i < HB.n_rows(); i++ )
+		for( int j = 0; j < HB.n_cols(); j++ )
+			HB(i, j) = HB_org(i, j);
+
+	matrix< int >HC(nrows, ncols);
+	for( int i = 0; i < HB.n_rows(); i++ )
+		for( int j = 0; j < HB.n_cols(); j++ )
+			HC(i, j) = HC_org(i, j);
 
 	gattr.girth     = girth;
 	gattr.equations = 0;
@@ -228,7 +238,7 @@ GIRTH_ATTRIBUTE check_girth( matrix<int> &HB, matrix<int> &HC, int M, int q_mod,
 	if( q_mod == 2 )
 		check = first_equations.check_voltages(a, M);
 	else
-		check = first_equations.check_voltages_and_coefs( a, M, coef );
+		check = first_equations.check_voltages_and_coefs( a, M, coef, q_mod-1 );
 
 	gattr.equations = check.equations;
 	gattr.badHB     = check.badHB;
@@ -356,220 +366,13 @@ void mexFunction(int nOut, mxArray *pOut[], int nInp, const mxArray *pInp[])
 	girth = (int)mxGetPr(pInp[4])[0];
 
 	unpackMatrix(mxGetPr(pInp[0]), mh, nh, HB );
-	unpackMatrix(mxGetPr(pInp[1]), mh, nh, HC );
+    if( q_mod > 2 )
+        unpackMatrix(mxGetPr(pInp[1]), mh, nh, HC );
 
     GIRTH_ATTRIBUTE girth_attribute = check_girth( HB, HC, M, q_mod, girth );
 	
     pOut[0] =  mxCreateDoubleScalar((double)girth_attribute.equations);
 	pOut[1] =  mxCreateDoubleScalar((double)girth_attribute.badHB);
 	pOut[2] =  mxCreateDoubleScalar((double)girth_attribute.badHC);
-
-#if 0
-	switch( nInp )
-	{
-	case 0:
-		// close decoder
-		// mexPrintf("close the decoder\n");
-		if( state ) 
-			decod_close( state );
-		state = NULL;
-		return;
-
-	case 2:
-	case 3:
-		{
-			double *p;
-			double **pp;
-			// run decoder
-			// mexPrintf("run the decoder\n");
-			// [iter_C, softq_C, hardq_C, min_abs_llr, sgn_cnt] =  decode( soft, maxsteps );            
-			maxiter = (int)mxGetPr(pInp[1])[0];
-			q   = (int)mxGetM(pInp[0]);
-			ng = (int)mxGetN(pInp[0]);
-
-			p_thr = nInp == 2 ? 0.0 : (double)mxGetPr(pInp[2])[0];
-
-			// mexPrintf("nOut: %d\n", nOut);
-			//mexPrintf("maxiter: %d, q: %d, state_q: %d, n: %d, thr: %f\n", maxiter, q, state->q, ng, p_thr);
-
-
-			if( state->q == q )
-			{
-				//                pOut[0]=mxCreateDoubleMatrix(q,ng,mxREAL);			//hard
-				pOut[0]=mxCreateDoubleMatrix(1,ng,mxREAL);			//hard
-				pOut[1]=mxCreateDoubleMatrix(1,1,mxREAL);			//iter
-
-				if( nOut > 2 )	pOut[2]=mxCreateDoubleMatrix(1,ng,mxREAL);		//min abs llr
-				if( nOut > 3 )	pOut[3]=mxCreateDoubleMatrix(1,ng,mxREAL);		//sgn counter
-
-				if( q == 1 )  
-					unpackRow(mxGetPr(pInp[0]), 1, ng, state->y );
-				else
-					unpackMatrix(mxGetPr(pInp[0]), q, ng, state->qy );
-
-				decision = 0;   
-
-				if( q == 1 )
-				{
-					if( nInp == 3 )
-						decision = (int)mxGetPr(pInp[2])[0];
-					else
-						decision = 0;
-				}
-
-				switch( dectype )
-				{
-				case 0: iter = bp_decod_qc_lm( state, state->y, state->decword, maxiter, decision);			    break;
-				case 1: iter = sum_prod_decod_qc_lm( state, state->y, state->decword, maxiter, decision);	            break;
-				case 2: iter = sum_prod_gf2_decod_qc_lm( state, state->y, state->decword, maxiter, decision);            break;
-				case 3: iter = min_sum_decod_qc_lm( state, state->y, state->decword, maxiter, decision, ms_alpha );      break;
-				case 4: iter = imin_sum_decod_qc_lm( state, state->y, state->decword, maxiter, decision, ms_alpha, ms_thr, ms_qbits, ms_dbits); break;
-				case 5: iter = isum_prod_gf2_decod_qc_lm( state, state->y, state->decword, maxiter, decision);           break;
-				case 6: iter = sum_prod_gfq_decod_lm( state, state->qy, state->qhard, state->qdecword, maxiter, p_thr ); break;
-				case 7: iter = tdmp_sum_prod_gf2_decod_qc_lm( state, state->y, state->decword, maxiter, decision);       break;
-				case 8: iter = lmin_sum_decod_qc_lm( state, state->y, state->decword, maxiter, decision, ms_alpha, ms_beta );      break;
-				case 9: iter = lche_decod( state, state->y, state->decword, maxiter, decision);                          break;
-				}
-
-
-				pOut[1] =  mxCreateDoubleScalar(iter);
-
-
-				p = mxGetPr(pOut[0]);
-
-				if( q == 1 )
-					for(  i = 0;  i < ng;  i++ )
-						p[i] = state->decword[i];
-				else
-					for(  i = 0;  i < ng;  i++ )
-						p[i] = state->qhard[i];
-
-
-				if( nOut > 2 )	
-				{
-					p = mxGetPr(pOut[2]);
-
-					mexPrintf("p: %d\n", (int)p);
-
-					if( dectype == 2 || dectype == 7 || dectype == 8)
-						for(  i = 0;  i < ng;  i++ ) 
-							p[i] = state->min_abs_llr[i];
-					else
-						for(  i = 0;  i < ng;  i++ ) 
-							p[i] = 0;
-
-				}
-
-				if( nOut > 3 )
-				{
-					p = mxGetPr(pOut[3]);
-
-					mexPrintf("p: %d\n", (int)p);
-
-					if( dectype == 2 || dectype == 7 || dectype == 8)
-						for(  i = 0;  i < ng;  i++ )
-							p[i] = state->sign_counter[i];
-					else
-						for(  i = 0;  i < ng;  i++ )
-							p[i] = 0;
-
-				}
-
-			}
-			else
-			{
-				mexErrMsgTxt("Allocation error");
-				*(mxGetPr(pOut[0])) = maxiter;
-			}
-			return;
-		}
-	default:
-		// open decoder
-		//mexPrintf("open the decoder\n");
-
-		dectype = (int)mxGetPr(pInp[0])[0];
-		switch( dectype )
-		{
-		case FHT_DEC:
-			// Open qDEc  decoder_type, c, HB, HC, M
-			q_bits = (int)mxGetPr(pInp[1])[0];
-			mh = (int)mxGetM(pInp[2]);
-			nh = (int)mxGetN(pInp[2]);
-
-			M = (int)mxGetPr(pInp[4])[0];
-			N = nh * M;
-			R = mh * M;
-
-			if( state )
-				decod_close( state );
-
-			state = decod_open( dectype, q_bits, mh, nh, M );
-			if( state == NULL )
-			{
-				mexErrMsgTxt("Allocation error");
-				return;
-			}
-
-			unpackMatrix_double2short(mxGetPr(pInp[2]), mh, nh, state->hb );
-			unpackMatrix_double2short(mxGetPr(pInp[3]), mh, nh, state->hc );
-
-			decod_init( state );
-			pOut[0]=mxCreateDoubleMatrix(1,1,mxREAL); 
-			*(mxGetPr(pOut[0])) = 1;
-			mexPrintf("decoder open: OK\n");
-			return;
-
-		default:
-			// Open qDEc  decoder_type, c, HB, M
-			//mexPrintf("open bin decoder\n");
-
-
-			q_bits = (int)mxGetPr(pInp[1])[0];
-			mh = (int)mxGetM(pInp[2]);
-			nh = (int)mxGetN(pInp[2]);
-
-			M = (int)mxGetPr(pInp[3])[0];
-			N = nh * M;
-			R = mh * M;
-
-			if( nInp >= 5 )
-				ms_alpha = mxGetPr(pInp[4])[0];
-
-			if( nInp >= 6 )
-				ms_beta = mxGetPr(pInp[5])[0];
-
-			//			  mexPrintf("alpha: %f, beta %f\n", ms_alpha, ms_beta);
-
-			//mexPrintf("qbits = %d, mh = %d, nh = %d, M = %d\n", q_bits, mh, nh, M);
-
-
-			if( state )
-				decod_close( state );
-
-			state = decod_open( dectype, q_bits, mh, nh, M );
-			if( state == NULL )
-			{
-				mexErrMsgTxt("Allocation error");
-				return;
-			}
-
-			// mexPrintf("Allocation OK\n");
-
-			unpackMatrix_double2short(mxGetPr(pInp[2]), mh, nh, state->hd );
-
-			//mexPrintf("unpacking OK\n");
-
-			decod_init( state );
-
-			//mexPrintf("init OK\n");
-
-			pOut[0]=mxCreateDoubleMatrix(1,1,mxREAL); 
-			*(mxGetPr(pOut[0])) = 1;
-			mexPrintf("decoder open: OK\n");
-			return;
-
-		}
-	}
-#endif
 }
 #endif

@@ -10,10 +10,12 @@
 #define MATRIX_HB "HB.TXT"
 #define MATRIX_HC "HC.TXT"
 
-#define MIN_GIRTH 4
-#define MAX_GIRTH 16
-#define Q_MOD 16
-#define TAILBITE_LENGTH 32
+#define MIN_GIRTH 12//4
+#define MAX_GIRTH 14//16
+#define Q_MOD  16
+#define TAILBITE_LENGTH 19//32
+
+//#define CYCL 4
 
 using namespace std;
 
@@ -50,6 +52,7 @@ int main( void )
 	M               = TAILBITE_LENGTH;
 	q_mod           = Q_MOD;
 
+	//q_mod = 2;   // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 
 #if 1
 	fp = fopen(MATRIX_HB, "rt");
@@ -110,6 +113,11 @@ int main( void )
 			current_HC(i, j) = HC[i][j];
 #endif
 
+#ifdef CYCL
+	for( int i = 0; i < rows; i++ )
+		for( int j = 0; j < columns; j++ )
+			current_HB(i, j) = current_HB(i, j) >= 0 ? current_HB(i,j) + CYCL : -1;
+#endif
 
 	for( int girth = MIN_GIRTH; girth < MAX_GIRTH; girth += 2 )
 	{
@@ -124,6 +132,6 @@ int main( void )
 
 		cout << " -- eqs: " << girth_attribute.equations << ", badHB " << girth_attribute.badHB << ", badHC " << girth_attribute.badHC << "\n\n";
 	}
-	system("pause");
+	//system("pause");
 	return 0;
 }
