@@ -10,36 +10,52 @@
 #define MATRIX_HB "HB.TXT"
 #define MATRIX_HC "HC.TXT"
 
-#define MIN_GIRTH 12//4
-#define MAX_GIRTH 14//16
+#define MIN_GIRTH 6
+#define MAX_GIRTH 32
 #define Q_MOD  16
-#define TAILBITE_LENGTH 19//32
+#define TAILBITE_LENGTH 7//32
 
 //#define CYCL 4
 
 using namespace std;
 
+#if 01
+#define NROWS 3
+#define NCOLS 4
+int HB[NROWS][NCOLS] = 
+{
+	0,  7, -1,  2,
+	10,  16,  5, -1,
+	8, -1,  17,  3
+};
 
+int HC[NROWS][NCOLS] = 
+{
+	1,  1, -1,  1,
+	1,  1,  1, -1,
+	1, -1,  1,  1
+};
+#else
 #define NROWS 4
 #define NCOLS 8
 int HB[NROWS][NCOLS] = 
 {
 	0, -1, -1, 31, 10, -1,  0, 16,   
 	0,  0, -1, -1, 23, 12,  1, 14,
-   -1,  0,  0,  0,  5, 27, -1,  3,
-   -1, -1,  0, 31, -1, 30,  6,  5  
+	-1,  0,  0,  0,  5, 27, -1,  3,
+	-1, -1,  0, 31, -1, 30,  6,  5  
 };
 
 int HC[NROWS][NCOLS] = 
 {
 	6, -1, -1, 10, 14, -1,  7,  8,   
 	6, 14, -1, -1, 11, 10,  4,  4,
-   -1, 14,  9,  8, 12,  6, -1,  6,
-   -1, -1,  9, 10, -1,  6, 11,  2  
+	-1, 14,  9,  8, 12,  6, -1,  6,
+	-1, -1,  9, 10, -1,  6, 11,  2  
 };
+#endif
 
-
-int main( void )
+int main( int argc, char **argv )
 {
 	matrix<int> current_HB;
 	matrix<int> current_HC;
@@ -54,8 +70,46 @@ int main( void )
 
 	//q_mod = 2;   // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 
-#if 1
-	fp = fopen(MATRIX_HB, "rt");
+#if 01
+	if( argc != 3 && argc != 5 )
+	{
+		printf("correct run for binary codes:\n");
+		printf("  first_equation HB M\n");
+		printf("correct run for non-binary codes:\n");
+		printf("  first_equation HB HC M Q\n");
+		printf("where HB, HC - matrices\n");
+		printf("      M - lifting\n");
+		printf("      Q - 2^m\n");
+		printf("\n");
+	
+		system("pause");
+		return 1;
+	}
+
+	M     = argc == 3 ? atoi(argv[2]) : atoi(argv[3]); 
+	if( argc == 3 )
+		q_mod = 2;
+	else
+		q_mod = atoi(argv[4]);
+
+	if( q_mod > 2 )
+	{
+		printf("parameters:\n");
+		printf("HB - %s\n", argv[1]);
+		printf("HC - %s\n", argv[2]);
+		printf("M  - %d\n", M);
+		printf("Q  - %d\n", q_mod);
+		printf("\n");
+	}
+	else
+	{
+		printf("parameters:\n");
+		printf("HB - %s\n", argv[1]);
+		printf("M  - %d\n", M);
+		printf("\n");
+	}
+
+	fp = fopen(argv[1], "rt");
 	if( fp == NULL )
 		return 1;
 
@@ -76,23 +130,26 @@ int main( void )
 	}
 	fclose( fp );
 
-	fp = fopen(MATRIX_HC, "rt");
-	if( fp == NULL )
-		return 1;
-
-	fscanf_s( fp, "%d", &rows );
-	fscanf_s( fp, "%d", &columns );
-
-	for( int i = 0; i < rows; i++ )
+	if( q_mod > 2 )
 	{
-		for( int j = 0; j < columns; j++ )
+		fp = fopen(argv[2], "rt");
+		if( fp == NULL )
+			return 1;
+
+		fscanf_s( fp, "%d", &rows );
+		fscanf_s( fp, "%d", &columns );
+
+		for( int i = 0; i < rows; i++ )
 		{
-			int tmp;
-			fscanf_s( fp, "%d", &tmp );
-			current_HC(i, j) = tmp;
+			for( int j = 0; j < columns; j++ )
+			{
+				int tmp;
+				fscanf_s( fp, "%d", &tmp );
+				current_HC(i, j) = tmp;
+			}
 		}
+		fclose( fp );
 	}
-	fclose( fp );
 
 	starting_length = current_HB.n_cols();
 
@@ -121,17 +178,35 @@ int main( void )
 
 	for( int girth = MIN_GIRTH; girth < MAX_GIRTH; girth += 2 )
 	{
+		int flag; 
 		GIRTH_ATTRIBUTE girth_attribute = check_girth( current_HB, current_HC, M, q_mod, girth );
-		
-		int flag = q_mod > 2 ? flag = girth_attribute.badHC : girth_attribute.badHB;
+
+		if( girth_attribute.equations < 0 )
+			flag = 1; 
+		else
+			flag = q_mod > 2 ? flag = girth_attribute.badHC : girth_attribute.badHB;
 
 		if( flag == 0 )
-			cout << "----- girth " << girth << ": OK"; 
+			printf("girth >= %2d, ", girth); 
 		else
-			cout << "----- girth " << girth << ": BAD";
+			printf("girth  = %2d, ", girth-2); 
 
-		cout << " -- eqs: " << girth_attribute.equations << ", badHB " << girth_attribute.badHB << ", badHC " << girth_attribute.badHC << "\n\n";
+		if( girth_attribute.equations < 0 )
+		{
+			printf("-- BALANCED_CYCLE\n");
+		}
+		else
+		{
+			printf("number of eqs: %d", girth_attribute.equations);
+			if( q_mod == 2 )
+				printf("   bad HB eqs %3d\n", girth_attribute.badHB);
+			else
+				printf("   bad HB eqs  %3d, bad HC eqs  %3d\n", girth_attribute.badHB, girth_attribute.badHC);
+		}
+
+		if( flag )
+			break;
 	}
-	//system("pause");
+	system("pause");
 	return 0;
 }

@@ -161,14 +161,20 @@ voltage_check_result equation_builder::check_voltages
     vector< int > values(tree.size());
     for (int i = 1, i_max = (int) tree.size(); i < i_max; ++i) {
         result_tree_node const &curr = tree[i];
-        if (curr.parent == 0) {
+        if (curr.parent == 0) 
+		{
             // a root in one of the trees
             values[i] = 0;
-        } else if (curr.negative) {
-            values[i] = values[curr.parent] - voltages[curr.edge_id];
-        } else {
-            values[i] = values[curr.parent] + voltages[curr.edge_id];
-        }
+        } 
+		else 
+			if (curr.negative) 
+			{
+				values[i] = values[curr.parent] - voltages[curr.edge_id];
+            } 
+			else 
+			{
+				values[i] = values[curr.parent] + voltages[curr.edge_id];
+			}
     }
     // 2. Testing the equations.
  //   int num_failed = 0;
@@ -182,7 +188,11 @@ voltage_check_result equation_builder::check_voltages
 	int HC_failed = 0;
 
     for (int i = 0, i_max = (int) equations.size(); i < i_max; ++i) {
-        int sum = values[equations[i].first] - values[equations[i].second];
+        int sum =  values[equations[i].first] - values[equations[i].second];
+		int e0 = equations[i].first;
+		int e1 = equations[i].second;
+		int w0 = values[equations[i].first];
+		int w1 = values[equations[i].second];
 
         if (sum % max_modulo == 0) {
             // An identity zero found.

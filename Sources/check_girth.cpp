@@ -99,7 +99,7 @@ GIRTH_ATTRIBUTE check_girth( matrix<int> &HB_org, matrix<int> &HC_org, int M, in
 			HC(i, j) = HC_org(i, j);
 
 	gattr.girth     = girth;
-	gattr.equations = 0;
+	gattr.equations = -1;
 	gattr.badHB     = 0;
 	gattr.badHC     = 0;
 
@@ -121,10 +121,10 @@ GIRTH_ATTRIBUTE check_girth( matrix<int> &HB_org, matrix<int> &HC_org, int M, in
 			{
 				if( HB(i, j) > -1  )
 				{
+					HC(i, j) = HC(i, j) % q_mod;
+
 					if( HC(i, j) == 0 )
 						HC(i, j) = q_mod-1;
-					else
-						HC(i, j) = HC(i, j) % q_mod;
 				}
 				else
 					HC(i, j) = -1;
@@ -361,18 +361,38 @@ void mexFunction(int nOut, mxArray *pOut[], int nInp, const mxArray *pInp[])
 	HB = matrix<int>(mh, nh);
 	HC = matrix<int>(mh, nh);
 
-	M     = (int)mxGetPr(pInp[2])[0];
-	q_mod = (int)mxGetPr(pInp[3])[0];
-	girth = (int)mxGetPr(pInp[4])[0];
+    //mexPrintf("nInp=%d\n", nInp);
+    //mexPrintf("nOut=%d\n", nOut);
 
-	unpackMatrix(mxGetPr(pInp[0]), mh, nh, HB );
-    if( q_mod > 2 )
-        unpackMatrix(mxGetPr(pInp[1]), mh, nh, HC );
+	if( nInp == 3 )
+	{
+		unpackMatrix(mxGetPr(pInp[0]), mh, nh, HB );
+		M     = (int)mxGetPr(pInp[1])[0];
+		girth = (int)mxGetPr(pInp[2])[0];
+	}
+
+	if( nInp == 5 )
+	{
+		unpackMatrix(mxGetPr(pInp[0]), mh, nh, HB );
+		unpackMatrix(mxGetPr(pInp[1]), mh, nh, HC );
+		M     = (int)mxGetPr(pInp[2])[0];
+		q_mod = (int)mxGetPr(pInp[3])[0];
+		girth = (int)mxGetPr(pInp[4])[0];
+	}
 
     GIRTH_ATTRIBUTE girth_attribute = check_girth( HB, HC, M, q_mod, girth );
 	
-    pOut[0] =  mxCreateDoubleScalar((double)girth_attribute.equations);
-	pOut[1] =  mxCreateDoubleScalar((double)girth_attribute.badHB);
-	pOut[2] =  mxCreateDoubleScalar((double)girth_attribute.badHC);
+	if( nOut == 2 )
+	{
+		pOut[0] =  mxCreateDoubleScalar((double)girth_attribute.equations);
+		pOut[1] =  mxCreateDoubleScalar((double)girth_attribute.badHB);
+	}
+
+	if( nOut == 3 )
+	{
+		pOut[0] =  mxCreateDoubleScalar((double)girth_attribute.equations);
+		pOut[1] =  mxCreateDoubleScalar((double)girth_attribute.badHB);
+		pOut[2] =  mxCreateDoubleScalar((double)girth_attribute.badHC);
+	}
 }
 #endif
